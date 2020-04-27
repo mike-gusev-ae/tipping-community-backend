@@ -13,7 +13,7 @@ module.exports = class PayForTxLogic {
     if (!ae || !ae.client) return PayForTxLogic.sendError(req, res, 500, 'sdk not initialized yet');
 
     try {
-      const result = await ae.claimTips(req.body.address, req.body.url);
+      await ae.claimTips(req.body.address, req.body.url, req.body.recheck ? req.body.recheck : false);
       CacheLogic.invalidateTips();
       CacheLogic.invalidateOracle();
       // TODO save tx hash to log

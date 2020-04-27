@@ -69,16 +69,21 @@ class Aeternity {
     return fs.readFileSync(`${__dirname}/OracleServiceInterface.aes`, 'utf-8');
   };
 
-  async preClaim(address, url) {
+  async preClaim(address, url, recheck) {
     const claimAmount = await this.contract.methods.unclaimed_for_url(url).then(r => r.decodedResult).catch(() => 0);
-    if (claimAmount === 0) throw new Error("No zero amount claims");
+    if (!recheck && claimAmount === 0) throw new Error("No zero amount claims");
 
+    console.log(1, recheck)
     // pre-claim if necessary (if not already claimed successfully)
-    const claimSuccess = await this.contract.methods.check_claim(url, address).then(r => r.decodedResult.success).catch(() => false);
+    const claimSuccess = recheck ? false : await this.contract.methods.check_claim(url, address).then(r => r.decodedResult.success).catch(() => false);
+    console.log(2, claimSuccess)
 
     if (!claimSuccess) {
       const fee = await this.oracleContract.methods.estimate_query_fee();
-      await this.contract.methods.pre_claim(url, address, { amount: fee.decodedResult });
+      console.log(3, fee.decodedResult);
+
+      await this.contract.methods.pre_claim(url, address, { amount: fee.decodedResult }).catch(console.error);
+      console.log(4);
 
       return new Promise((resolve, reject) => {
         // check claim every second, 20 times
@@ -89,6 +94,8 @@ class Aeternity {
             return resolve();
           }
           if (intervalCounter++ > 20) {
+            console.log(5, intervalCounter);
+
             clearInterval(interval);
             return reject({ message: "check_claim interval timeout" });
           }
@@ -99,10 +106,10 @@ class Aeternity {
     }
   }
 
-  async claimTips(address, url) {
+  async claimTips(address, url, recheck) {
     try {
-      await this.preClaim(address, url);
-      const result = await this.contract.methods.claim(url, address, false);
+      await this.preClaim(address, url, recheck);
+      const result = await this.contract.methods.claim(url, address, recheck);
       return result.decodedResult;
     } catch (e) {
       console.log(e);
