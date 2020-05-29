@@ -86,6 +86,7 @@ module.exports = class LinkPreviewLogic {
         newUrl = `/linkpreview/image/${filename}`;
         console.log('Got image snapshot preview for', filename);
       } catch (e) {
+        console.log(e);
         console.error('screen shot api failed as well for ', requestUrl);
       }
     }

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha --exit",
     "benchmark": "node benchmark.js",
-    "db:create": "npx sequelize-cli db:migrate",
+    "db:create": "npx sequelize-cli db:migrate --config \"config/config.json\" --env \"development\"",
     "db:makemigrations": "./node_modules/sequelize-auto-migrations/bin/makemigration.js"
   },
   "repository": {
