@@ -7,7 +7,7 @@
                     "allowNull": false,
                     "primaryKey": true,
                     "field": "tipId",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.STRING"
                 },
                 "status": {
                     "defaultValue": {
@@ -48,22 +48,11 @@
                 "tipId": {
                     "allowNull": false,
                     "field": "tipId",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.STRING"
                 },
                 "text": {
                     "allowNull": false,
                     "field": "text",
-                    "seqType": "Sequelize.STRING"
-                },
-                "author": {
-                    "allowNull": false,
-                    "field": "author",
-                    "references": {
-                        "model": "Profiles",
-                        "key": "author"
-                    },
-                    "onDelete": "NO ACTION",
-                    "onUpdate": "CASCADE",
                     "seqType": "Sequelize.STRING"
                 },
                 "hidden": {
@@ -108,6 +97,17 @@
                 "hierarchyLevel": {
                     "field": "hierarchyLevel",
                     "seqType": "Sequelize.INTEGER.UNSIGNED"
+                },
+                "author": {
+                    "allowNull": true,
+                    "references": {
+                        "model": "Profiles",
+                        "key": "author"
+                    },
+                    "onDelete": "SET NULL",
+                    "onUpdate": "CASCADE",
+                    "field": "author",
+                    "seqType": "Sequelize.STRING"
                 }
             },
             "indexes": []
@@ -520,7 +520,7 @@
                     "onDelete": "SET NULL",
                     "onUpdate": "CASCADE",
                     "field": "tipId",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.STRING"
                 }
             },
             "indexes": []
@@ -532,7 +532,7 @@
                     "allowNull": false,
                     "primaryKey": true,
                     "field": "id",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.STRING"
                 },
                 "language": {
                     "allowNull": true,
@@ -606,5 +606,5 @@
             "indexes": []
         }
     },
-    "revision": 16
+    "revision": 18
 }

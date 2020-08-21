@@ -4,14 +4,10 @@ module.exports = (sequelize, DataTypes) => {
   const Comment = sequelize.define('Comment', {
     // attributes
     tipId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    text: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    author: {
+    text: {
       type: DataTypes.STRING,
       allowNull: false,
     },
