@@ -50,10 +50,10 @@ module.exports = class CacheLogic {
   static async findContractEvents() {
     const fetchContractEvents = async () => lock.acquire('fetchContractEvents', async () => {
       const contractTransactions = await aeternity.middlewareContractTransactions();
-      return contractTransactions.map(tx => tx.hash).asyncMap(hash => aeternity.transactionEvents(hash));
+      return contractTransactions.asyncMap(tx => aeternity.transactionEvents(tx));
     });
 
-    return cache.getOrSet(['contractEvents'], async () => fetchContractEvents().catch(Logger.error), cache.shortCacheTime);
+    return fetchContractEvents();//cache.getOrSet(['contractEvents'], async () => .catch(Logger.error), cache.shortCacheTime);
   }
 
   static async fetchPrice() {
@@ -89,16 +89,15 @@ module.exports = class CacheLogic {
     return tips;
   }
 
-  static fetchChainNames() {
-    return cache.getOrSet(['getChainNames'], async () => {
+  static async fetchChainNames() {
+    //return cache.getOrSet(['fetchChainNames'], async () => {
       const result = await aeternity.getChainNames();
       const allProfiles = await Profile.findAll({ raw: true });
 
       return result.reduce((acc, chainName) => {
-        if (!chainName.pointers) return acc;
+        if (!chainName.info.pointers || !chainName.info.pointers.account_pubkey) return acc;
 
-        const accountPubkeyPointer = chainName.pointers.find(pointer => pointer.key === 'account_pubkey');
-        const pubkey = accountPubkeyPointer ? accountPubkeyPointer.id : null;
+        const pubkey = chainName.info.pointers.account_pubkey;
         if (!pubkey) return acc;
 
         // already found a chain name
@@ -118,7 +117,7 @@ module.exports = class CacheLogic {
 
         return acc;
       }, {});
-    }, cache.shortCacheTime);
+    //}, cache.shortCacheTime);
   }
 
   static async getAllTips(blacklist = true) {

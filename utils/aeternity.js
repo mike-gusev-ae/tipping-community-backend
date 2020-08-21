@@ -7,6 +7,7 @@ const Util = require('./util');
 const { TRACE_STATES } = require('../models/enums/trace');
 const { topicsRegex } = require('./tipTopicUtil');
 const Logger = require('./logger');
+const JSONbig = require('json-bigint')({'storeAsString': true})
 
 const { decodeEvents, SOPHIA_TYPES } = requireESM('@aeternity/aepp-sdk/es/contract/aci/transformation');
 
@@ -50,16 +51,22 @@ class Aeternity {
     return (await this.client.getNodeInfo()).nodeNetworkId;
   }
 
-  async middlewareContractTransactions() {
-    return axios.get(`${MIDDLEWARE_URL}/middleware/contracts/transactions/address/${process.env.CONTRACT_ADDRESS}`)
-      .then(res => res.data.transactions
-        .filter(tx => tx.tx.type === 'ContractCallTx'));
+  async iterateMdw(next) {
+    const res = await axios.get('http://localhost:4000/' + next, { transformResponse: [data  => data] }).then(res => JSONbig.parse(res.data));
+    if (res.next) {
+      return res.data.concat(await this.iterateMdw(res.next));
+    } else {
+      return res.data;
+    }
   }
 
-  async transactionEvents(hash) {
-    const fetchTransactionEvents = async () => {
-      const tx = await this.client.tx(hash);
-      const microBlock = await this.client.getMicroBlockHeader(tx.blockHash);
+  async middlewareContractTransactions() {
+    return this.iterateMdw(`txs/backward/and?contract=${process.env.CONTRACT_ADDRESS}&type=contract_call&limit=1000`);
+  }
+
+  async transactionEvents(data) {
+    //const fetchTransactionEvents = async () => {
+      //const tx = await this.client.tx(data.hash);
 
       const eventsSchema = [
         { name: 'TipReceived', types: [SOPHIA_TYPES.address, SOPHIA_TYPES.int, SOPHIA_TYPES.string] },
@@ -69,25 +76,23 @@ class Aeternity {
         { name: 'CheckPersistClaim', types: [SOPHIA_TYPES.string, SOPHIA_TYPES.address, SOPHIA_TYPES.int] },
       ];
 
-      const decodedEvents = decodeEvents(tx.log, { schema: eventsSchema });
+      const decodedEvents = decodeEvents(data.tx.log, { schema: eventsSchema });
 
       return decodedEvents.map(decodedEvent => ({
         event: decodedEvent.name,
         address: `ak_${decodedEvent.decoded[1]}`,
         amount: decodedEvent.decoded[2] ? decodedEvent.decoded[2] : null,
         url: decodedEvent.decoded[0],
-        caller: tx.tx.callerId,
-        nonce: tx.tx.nonce,
-        height: tx.height,
-        hash: tx.hash,
-        time: microBlock.time,
+        caller: data.tx.caller_id,
+        nonce: data.tx.nonce,
+        height: data.block_height,
+        hash: data.hash,
+        time: data.micro_time,
       }));
-    };
+    }
 
-    return this.cache
-      ? this.cache.getOrSet(['transactionEvents', hash], () => fetchTransactionEvents())
-      : fetchTransactionEvents();
-  }
+    //return fetchTransactionEvents();
+  //}
 
   async getOracleState() {
     if (!this.client) throw new Error('Init sdk first');
@@ -240,7 +245,7 @@ class Aeternity {
   }
 
   async getChainNames() {
-    return axios.get(`${MIDDLEWARE_URL}/middleware/names/active`).then(res => res.data).catch(Logger.error);
+    return this.iterateMdw(`names/active?limit=1000`).catch(Logger.error);
   }
 
   async getAddressForChainName(name) {
