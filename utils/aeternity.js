@@ -7,7 +7,6 @@ const Util = require('./util');
 const { TRACE_STATES } = require('../models/enums/trace');
 const { topicsRegex } = require('./tipTopicUtil');
 const Logger = require('./logger');
-const JSONbig = require('json-bigint')({'storeAsString': true})
 
 const { decodeEvents, SOPHIA_TYPES } = requireESM('@aeternity/aepp-sdk/es/contract/aci/transformation');
 
@@ -52,12 +51,11 @@ class Aeternity {
   }
 
   async iterateMdw(next) {
-    const res = await axios.get('http://localhost:4000/' + next, { transformResponse: [data  => data] }).then(res => JSONbig.parse(res.data));
-    if (res.next) {
-      return res.data.concat(await this.iterateMdw(res.next));
-    } else {
-      return res.data;
+    const result = await axios.get(`${MIDDLEWARE_URL}/${next}`).then(res => res.data);
+    if (result.next) {
+      return result.data.concat(await this.iterateMdw(result.next));
     }
+    return result.data;
   }
 
   async middlewareContractTransactions() {
@@ -65,34 +63,28 @@ class Aeternity {
   }
 
   async transactionEvents(data) {
-    //const fetchTransactionEvents = async () => {
-      //const tx = await this.client.tx(data.hash);
+    const eventsSchema = [
+      { name: 'TipReceived', types: [SOPHIA_TYPES.address, SOPHIA_TYPES.int, SOPHIA_TYPES.string] },
+      { name: 'ReTipReceived', types: [SOPHIA_TYPES.address, SOPHIA_TYPES.int, SOPHIA_TYPES.string] },
+      { name: 'TipWithdrawn', types: [SOPHIA_TYPES.address, SOPHIA_TYPES.int, SOPHIA_TYPES.string] },
+      { name: 'QueryOracle', types: [SOPHIA_TYPES.string, SOPHIA_TYPES.address] },
+      { name: 'CheckPersistClaim', types: [SOPHIA_TYPES.string, SOPHIA_TYPES.address, SOPHIA_TYPES.int] },
+    ];
 
-      const eventsSchema = [
-        { name: 'TipReceived', types: [SOPHIA_TYPES.address, SOPHIA_TYPES.int, SOPHIA_TYPES.string] },
-        { name: 'ReTipReceived', types: [SOPHIA_TYPES.address, SOPHIA_TYPES.int, SOPHIA_TYPES.string] },
-        { name: 'TipWithdrawn', types: [SOPHIA_TYPES.address, SOPHIA_TYPES.int, SOPHIA_TYPES.string] },
-        { name: 'QueryOracle', types: [SOPHIA_TYPES.string, SOPHIA_TYPES.address] },
-        { name: 'CheckPersistClaim', types: [SOPHIA_TYPES.string, SOPHIA_TYPES.address, SOPHIA_TYPES.int] },
-      ];
+    const decodedEvents = decodeEvents(data.tx.log, { schema: eventsSchema });
 
-      const decodedEvents = decodeEvents(data.tx.log, { schema: eventsSchema });
-
-      return decodedEvents.map(decodedEvent => ({
-        event: decodedEvent.name,
-        address: `ak_${decodedEvent.decoded[1]}`,
-        amount: decodedEvent.decoded[2] ? decodedEvent.decoded[2] : null,
-        url: decodedEvent.decoded[0],
-        caller: data.tx.caller_id,
-        nonce: data.tx.nonce,
-        height: data.block_height,
-        hash: data.hash,
-        time: data.micro_time,
-      }));
-    }
-
-    //return fetchTransactionEvents();
-  //}
+    return decodedEvents.map(decodedEvent => ({
+      event: decodedEvent.name,
+      address: `ak_${decodedEvent.decoded[1]}`,
+      amount: decodedEvent.decoded[2] ? decodedEvent.decoded[2] : null,
+      url: decodedEvent.decoded[0],
+      caller: data.tx.caller_id,
+      nonce: data.tx.nonce,
+      height: data.block_height,
+      hash: data.hash,
+      time: data.micro_time,
+    }));
+  }
 
   async getOracleState() {
     if (!this.client) throw new Error('Init sdk first');
@@ -245,7 +237,7 @@ class Aeternity {
   }
 
   async getChainNames() {
-    return this.iterateMdw(`names/active?limit=1000`).catch(Logger.error);
+    return this.iterateMdw('names/active?limit=1000').catch(Logger.error);
   }
 
   async getAddressForChainName(name) {

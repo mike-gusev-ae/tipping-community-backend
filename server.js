@@ -11,7 +11,7 @@ app.set('view engine', 'handlebars');
 app.use(express.json()); // for parsing application/json
 
 process.on('unhandledRejection', (reason, p) => {
-  console.error(`Unhandled Rejection at: Promise ${p} reason: ${reason.stack}`);
+  logger.error(`Unhandled Rejection at: Promise ${p} reason: ${reason.stack}`);
 });
 
 app.use(cors({

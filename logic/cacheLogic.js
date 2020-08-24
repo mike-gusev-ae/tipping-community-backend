@@ -53,7 +53,7 @@ module.exports = class CacheLogic {
       return contractTransactions.asyncMap(tx => aeternity.transactionEvents(tx));
     });
 
-    return fetchContractEvents();//cache.getOrSet(['contractEvents'], async () => .catch(Logger.error), cache.shortCacheTime);
+    return cache.getOrSet(['contractEvents'], async () => fetchContractEvents().catch(Logger.error), cache.shortCacheTime);
   }
 
   static async fetchPrice() {
@@ -90,7 +90,7 @@ module.exports = class CacheLogic {
   }
 
   static async fetchChainNames() {
-    //return cache.getOrSet(['fetchChainNames'], async () => {
+    return cache.getOrSet(['fetchChainNames'], async () => {
       const result = await aeternity.getChainNames();
       const allProfiles = await Profile.findAll({ raw: true });
 
@@ -117,7 +117,7 @@ module.exports = class CacheLogic {
 
         return acc;
       }, {});
-    //}, cache.shortCacheTime);
+    }, cache.shortCacheTime);
   }
 
   static async getAllTips(blacklist = true) {
@@ -254,7 +254,7 @@ module.exports = class CacheLogic {
     let contractEvents = await CacheLogic.findContractEvents();
     if (req.query.address) contractEvents = contractEvents.filter(e => e.address === req.query.address);
     if (req.query.event) contractEvents = contractEvents.filter(e => e.event === req.query.event);
-    contractEvents.sort((a, b) => b.time - a.time);
+    contractEvents.sort((a, b) => b.time - a.time || b.nonce - a.nonce);
     if (req.query.limit) contractEvents = contractEvents.slice(0, parseInt(req.query.limit, 10));
     res.send(contractEvents);
   }
