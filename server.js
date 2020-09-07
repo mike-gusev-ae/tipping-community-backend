@@ -3,7 +3,7 @@ const express = require('express');
 const app = express();
 const exphbs = require('express-handlebars');
 const cors = require('cors');
-const Logger = require('./utils/logger.js');
+const Logger = require('./utils/logger');
 
 // VIEWS
 app.engine('handlebars', exphbs());
@@ -11,7 +11,7 @@ app.set('view engine', 'handlebars');
 app.use(express.json()); // for parsing application/json
 
 process.on('unhandledRejection', (reason, p) => {
-  logger.error(`Unhandled Rejection at: Promise ${p} reason: ${reason.stack}`);
+  Logger.error(`Unhandled Rejection at: Promise ${p} reason: ${reason.stack}`);
 });
 
 app.use(cors({
