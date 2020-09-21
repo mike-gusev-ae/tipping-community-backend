@@ -12,9 +12,10 @@ process.env = {
   REDIS_URL: 'redis://localhost:6379',
   IPFS_URL: 'http://localhost:5001',
   //IPFS_URL: 'http://3.124.114.189:5001',
-  MIDDLEWARE_URL: 'https://mainnet.aeternity.io'
+  MIDDLEWARE_URL: 'https://mainnet.aeternity.io/mdw/'
 };
 */
+
 process.env = {
   ...process.env,
   NODE_URL: 'https://testnet.aeternity.io',
@@ -26,7 +27,7 @@ process.env = {
   REDIS_URL: 'redis://localhost:6379',
   IPFS_URL: 'http://localhost:5001',
   ORACLE_CONTRACT_ADDRESS: 'ct_2PbBVGroJ2G618tHbWEWRrrxxf1BAn7Qt7BoNcLh3LqsSck8Lu',
-  MIDDLEWARE_URL: 'https://testnet.aeternity.io',
+  MIDDLEWARE_URL: 'https://testnet.aeternity.io/mdw/',
   CONTRACT_FILE: 'NewTippingInterface',
 }
 
