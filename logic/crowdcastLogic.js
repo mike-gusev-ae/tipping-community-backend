@@ -44,7 +44,7 @@ const singleEvent = {
   date: '01-03-2020',
 };
 
-module.exports = class EventLogic {
+module.exports = class CrowdcastLogic {
   static async getSingleItem(req, res) {
     res.send(singleEvent.toJSON());
   }
