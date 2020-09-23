@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const EventLogic = require('../logic/crowdcastLogic.js');
+const EventLogic = require('../logic/eventLogic.js');
 
 const router = new Router();
 
